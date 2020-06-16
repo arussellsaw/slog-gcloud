@@ -3,6 +3,7 @@ package sloggcloud
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/monzo/typhon"
@@ -14,6 +15,14 @@ func CloudContextFilter(r typhon.Request, s typhon.Service) typhon.Response {
 	r.Context = ctx
 
 	return s(r)
+}
+
+func CloudContextMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := WithTrace(r.Context(), r)
+		r = r.WithContext(ctx)
+		h.ServeHTTP(w, r)
+	})
 }
 
 type traceKey string
