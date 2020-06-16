@@ -11,7 +11,7 @@ import (
 
 // CloudContextFilter adds data to the context for the Google Cloud Run environment
 func CloudContextFilter(r typhon.Request, s typhon.Service) typhon.Response {
-	ctx := WithTrace(r.Context, r)
+	ctx := WithTrace(r.Context, &r.Request)
 	r.Context = ctx
 
 	return s(r)
@@ -27,7 +27,7 @@ func CloudContextMiddleware(h http.Handler) http.Handler {
 
 type traceKey string
 
-func WithTrace(ctx context.Context, r typhon.Request) context.Context {
+func WithTrace(ctx context.Context, r *http.Request) context.Context {
 	var trace string
 
 	traceHeader := r.Header.Get("X-Cloud-Trace-Context")
