@@ -9,17 +9,19 @@ import (
 	"github.com/monzo/typhon"
 )
 
+var ProjectID string
+
 // CloudContextFilter adds data to the context for the Google Cloud Run environment
-func CloudContextFilter(r typhon.Request, s typhon.Service, projectID string) typhon.Response {
-	ctx := WithTrace(r.Context, &r.Request, projectID)
+func CloudContextFilter(r typhon.Request, s typhon.Service) typhon.Response {
+	ctx := WithTrace(r.Context, &r.Request, ProjectID)
 	r.Context = ctx
 
 	return s(r)
 }
 
-func CloudContextMiddleware(h http.Handler, projectID string) http.Handler {
+func CloudContextMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := WithTrace(r.Context(), r, projectID)
+		ctx := WithTrace(r.Context(), r, ProjectID)
 		r = r.WithContext(ctx)
 		h.ServeHTTP(w, r)
 	})
