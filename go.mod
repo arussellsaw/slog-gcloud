@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
+	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/monzo/slog v0.0.0-20200611142344-440dc23ce76d
 	github.com/monzo/terrors v0.0.0-20191030112059-325b9ec5dcdf // indirect
