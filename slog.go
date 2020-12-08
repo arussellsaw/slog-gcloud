@@ -3,6 +3,7 @@ package sloggcloud
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/monzo/slog"
@@ -16,10 +17,11 @@ type StackDriverLogger struct {
 }
 
 func (l *StackDriverLogger) Log(evs ...slog.Event) {
+	enc := json.NewEncoder(os.Stdout)
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	for _, e := range evs {
-		fmt.Println(NewEntry(e))
+		enc.Encode(NewEntry(e))
 	}
 }
 
