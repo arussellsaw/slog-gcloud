@@ -1,27 +1,45 @@
 package sloggcloud
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"sync"
 
+	"cloud.google.com/go/logging"
 	"github.com/monzo/slog"
 )
+
+func NewLogger(ctx context.Context, name string) (*StackDriverLogger, error) {
+	l, err := logging.NewClient(ctx, ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &StackDriverLogger{
+		logger: l.Logger(name),
+	}, nil
+}
 
 // StackDriverLogger is an implementation of monzo/slog.Logger
 // that emits stackdriver compatible events
 type StackDriverLogger struct {
 	mu     sync.Mutex
 	buffer []slog.Event
+	logger *logging.Logger
 }
 
 func (l *StackDriverLogger) Log(evs ...slog.Event) {
-	enc := json.NewEncoder(os.Stdout)
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	for _, e := range evs {
-		enc.Encode(NewEntry(e))
+		l.logger.Log(logging.Entry{
+			Timestamp: e.Timestamp,
+			Labels:    allLabels(e),
+			Trace:     Trace(e.Context),
+			Payload:   e.Message,
+			Severity:  logging.ParseSeverity(e.Severity.String()),
+		})
 	}
 }
 
@@ -61,4 +79,15 @@ func NewEntry(e slog.Event) Entry {
 		Message:  e.Message,
 		Params:   metadata,
 	}
+}
+
+func allLabels(e slog.Event) map[string]string {
+	out := make(map[string]string)
+	for k, v := range e.Labels {
+		out[k] = v
+	}
+	for k, v := range e.Metadata {
+		out[k] = fmt.Sprint(v)
+	}
+	return out
 }
