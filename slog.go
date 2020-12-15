@@ -1,44 +1,29 @@
 package sloggcloud
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
 
-	"cloud.google.com/go/logging"
 	"github.com/monzo/slog"
 )
-
-func NewLogger(ctx context.Context, name string) (*StackDriverLogger, error) {
-	l, err := logging.NewClient(ctx, ProjectID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &StackDriverLogger{
-		logger: l.Logger(name),
-	}, nil
-}
 
 // StackDriverLogger is an implementation of monzo/slog.Logger
 // that emits stackdriver compatible events
 type StackDriverLogger struct {
 	mu     sync.Mutex
 	buffer []slog.Event
-	logger *logging.Logger
 }
 
 func (l *StackDriverLogger) Log(evs ...slog.Event) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	for _, e := range evs {
-		l.logger.Log(logging.Entry{
-			Timestamp: e.Timestamp,
-			Labels:    allLabels(e),
-			Trace:     Trace(e.Context),
-			Payload:   e.Message,
-			Severity:  logging.ParseSeverity(e.Severity.String()),
+		fmt.Println(Entry{
+			Labels:   allLabels(e),
+			Trace:    Trace(e.Context),
+			Message:  e.Message,
+			Severity: e.Severity.String(),
 		})
 	}
 }
@@ -49,9 +34,10 @@ func (l *StackDriverLogger) Flush() error {
 
 // Entry ...
 type Entry struct {
-	Message  string `json:"message"`
-	Severity string `json:"severity,omitempty"`
-	Trace    string `json:"logging.googleapis.com/trace,omitempty"`
+	Message  string            `json:"message"`
+	Severity string            `json:"severity,omitempty"`
+	Trace    string            `json:"logging.googleapis.com/trace,omitempty"`
+	Labels   map[string]string `json:"logging.googleapis.com/labels,omitempty"`
 
 	Params map[string]string `json:"params,omitempty"`
 }
